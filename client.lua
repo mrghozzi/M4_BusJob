@@ -1,6 +1,6 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 
-local allowedJob = "busdriver" -- غيّره حسب الوظيفة المطلوبة
+local allowedJob = "busdriver" -- Change this to the job name you want to allowedJob 
 
 local function isPlayerBusDriver()
     local PlayerData = QBCore.Functions.GetPlayerData()
