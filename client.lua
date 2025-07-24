@@ -10,6 +10,24 @@ end
 local busSpawnLocation = vector3(452.31, -583.75, 28.5) -- Bus Depot
 local busModel = 'bus'
 
+-- Dashboard variables
+local activeBusLine = nil
+local currentStationIndex = 0
+local nextStationIndex = 0
+local showDashboard = false
+
+-- Passenger variables
+local passengers = {}
+local maxPassengers = 15
+local currentPassengers = 0
+local passengerModels = {'a_f_m_beach_01', 'a_f_m_bevhills_01', 'a_f_m_bevhills_02', 'a_f_m_bodybuild_01', 'a_f_m_business_02', 'a_f_m_downtown_01', 'a_f_m_eastsa_01', 'a_f_m_eastsa_02', 'a_f_m_fatbla_01', 'a_f_m_fatwhite_01', 'a_f_m_ktown_01', 'a_f_m_ktown_02', 'a_f_m_prolhost_01', 'a_f_m_salton_01', 'a_f_m_skidrow_01', 'a_f_m_soucent_01', 'a_f_m_soucent_02', 'a_f_m_soucentmc_01', 'a_f_m_tourist_01', 'a_f_m_tramp_01', 'a_f_m_trampbeac_01', 'a_f_o_genstreet_01', 'a_f_o_indian_01', 'a_f_o_ktown_01', 'a_f_o_salton_01', 'a_f_o_soucent_01', 'a_f_o_soucent_02', 'a_f_y_beach_01', 'a_f_y_bevhills_01', 'a_f_y_bevhills_02', 'a_f_y_bevhills_03', 'a_f_y_bevhills_04', 'a_f_y_business_01', 'a_f_y_business_02', 'a_f_y_business_03', 'a_f_y_business_04', 'a_f_y_eastsa_01', 'a_f_y_eastsa_02', 'a_f_y_eastsa_03', 'a_f_y_epsilon_01', 'a_f_y_fitness_01', 'a_f_y_fitness_02', 'a_f_y_genhot_01', 'a_f_y_golfer_01', 'a_f_y_hiker_01', 'a_f_y_hippie_01', 'a_f_y_hipster_01', 'a_f_y_hipster_02', 'a_f_y_hipster_03', 'a_f_y_hipster_04', 'a_f_y_indian_01', 'a_f_y_juggalo_01', 'a_f_y_runner_01', 'a_f_y_rurmeth_01', 'a_f_y_scdressy_01', 'a_f_y_skater_01', 'a_f_y_soucent_01', 'a_f_y_soucent_02', 'a_f_y_soucent_03', 'a_f_y_tennis_01', 'a_f_y_topless_01', 'a_f_y_tourist_01', 'a_f_y_tourist_02', 'a_f_y_vinewood_01', 'a_f_y_vinewood_02', 'a_f_y_vinewood_03', 'a_f_y_vinewood_04', 'a_f_y_yoga_01', 'a_m_m_acult_01', 'a_m_m_afriamer_01', 'a_m_m_beach_01', 'a_m_m_beach_02', 'a_m_m_bevhills_01', 'a_m_m_bevhills_02', 'a_m_m_business_01', 'a_m_m_eastsa_01', 'a_m_m_eastsa_02', 'a_m_m_farmer_01', 'a_m_m_fatlatin_01', 'a_m_m_genfat_01', 'a_m_m_genfat_02', 'a_m_m_golfer_01', 'a_m_m_hasjew_01', 'a_m_m_hillbilly_01', 'a_m_m_hillbilly_02', 'a_m_m_indian_01', 'a_m_m_ktown_01', 'a_m_m_malibu_01', 'a_m_m_mexcntry_01', 'a_m_m_mexlabor_01', 'a_m_m_og_boss_01', 'a_m_m_paparazzi_01', 'a_m_m_polynesian_01', 'a_m_m_prolhost_01', 'a_m_m_rurmeth_01', 'a_m_m_salton_01', 'a_m_m_salton_02', 'a_m_m_salton_03', 'a_m_m_salton_04', 'a_m_m_skater_01', 'a_m_m_skidrow_01', 'a_m_m_socenlat_01', 'a_m_m_soucent_01', 'a_m_m_soucent_02', 'a_m_m_soucent_03', 'a_m_m_soucent_04', 'a_m_m_stlat_02', 'a_m_m_tennis_01', 'a_m_m_tourist_01', 'a_m_m_tramp_01', 'a_m_m_trampbeac_01', 'a_m_m_tranvest_01', 'a_m_m_tranvest_02', 'a_m_o_acult_01', 'a_m_o_acult_02', 'a_m_o_beach_01', 'a_m_o_genstreet_01', 'a_m_o_ktown_01', 'a_m_o_salton_01', 'a_m_o_soucent_01', 'a_m_o_soucent_02', 'a_m_o_soucent_03', 'a_m_o_tramp_01', 'a_m_y_acult_01', 'a_m_y_acult_02', 'a_m_y_beach_01', 'a_m_y_beach_02', 'a_m_y_beach_03', 'a_m_y_beachvesp_01', 'a_m_y_beachvesp_02', 'a_m_y_bevhills_01', 'a_m_y_bevhills_02', 'a_m_y_breakdance_01', 'a_m_y_busicas_01', 'a_m_y_business_01', 'a_m_y_business_02', 'a_m_y_business_03', 'a_m_y_cyclist_01', 'a_m_y_dhill_01', 'a_m_y_downtown_01', 'a_m_y_eastsa_01', 'a_m_y_eastsa_02', 'a_m_y_epsilon_01', 'a_m_y_epsilon_02', 'a_m_y_gay_01', 'a_m_y_gay_02', 'a_m_y_genstreet_01', 'a_m_y_genstreet_02', 'a_m_y_golfer_01', 'a_m_y_hasjew_01', 'a_m_y_hiker_01', 'a_m_y_hippy_01', 'a_m_y_hipster_01', 'a_m_y_hipster_02', 'a_m_y_hipster_03', 'a_m_y_indian_01', 'a_m_y_jetski_01', 'a_m_y_juggalo_01', 'a_m_y_ktown_01', 'a_m_y_ktown_02', 'a_m_y_latino_01', 'a_m_y_methhead_01', 'a_m_y_mexthug_01', 'a_m_y_motox_01', 'a_m_y_motox_02', 'a_m_y_musclbeac_01', 'a_m_y_musclbeac_02', 'a_m_y_polynesian_01', 'a_m_y_roadcyc_01', 'a_m_y_runner_01', 'a_m_y_runner_02', 'a_m_y_salton_01', 'a_m_y_skater_01', 'a_m_y_skater_02', 'a_m_y_soucent_01', 'a_m_y_soucent_02', 'a_m_y_soucent_03', 'a_m_y_soucent_04', 'a_m_y_stbla_01', 'a_m_y_stbla_02', 'a_m_y_stlat_01', 'a_m_y_stwhi_01', 'a_m_y_stwhi_02', 'a_m_y_sunbathe_01', 'a_m_y_surfer_01', 'a_m_y_vindouche_01', 'a_m_y_vinewood_01', 'a_m_y_vinewood_02', 'a_m_y_vinewood_03', 'a_m_y_vinewood_04', 'a_m_y_yoga_01'}
+local passengerSeats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14} -- Seat indices for bus
+
+-- Reward variables
+local passengerReward = 15 -- Amount of money earned per passenger
+local totalEarnings = 0 -- Total earnings in current session
+local showEarnings = true -- Whether to show earnings on dashboard
+
 local busLines = {
     {
         name = 'South Loop', number = 1, color = {r = 255, g = 0, b = 0}, 
@@ -145,6 +163,278 @@ local function createBlipsForLine(line)
     end
 end
 
+-- Function to create a random passenger ped
+local function createPassenger(busVehicle, seatIndex)
+    if currentPassengers >= maxPassengers then return nil end
+    
+    -- Select a random passenger model
+    local modelName = passengerModels[math.random(1, #passengerModels)]
+    local modelHash = GetHashKey(modelName)
+    
+    -- Request the model
+    RequestModel(modelHash)
+    local timeoutCounter = 0
+    while not HasModelLoaded(modelHash) do
+        timeoutCounter = timeoutCounter + 1
+        if timeoutCounter > 50 then -- Timeout after ~5 seconds
+            return nil
+        end
+        Wait(100)
+    end
+    
+    -- Get bus position for spawning passenger nearby
+    local busCoords = GetEntityCoords(busVehicle)
+    local spawnPos = vector3(busCoords.x + math.random(-5, 5), busCoords.y + math.random(-5, 5), busCoords.z)
+    
+    -- Create the passenger ped
+    local ped = CreatePed(4, modelHash, spawnPos.x, spawnPos.y, spawnPos.z, 0.0, true, false)
+    
+    -- Set ped properties
+    SetPedDefaultComponentVariation(ped)
+    SetPedRandomComponentVariation(ped, true)
+    SetPedRandomProps(ped)
+    SetBlockingOfNonTemporaryEvents(ped, true)
+    SetPedCanRagdollFromPlayerImpact(ped, false)
+    SetPedCanRagdoll(ped, false)
+    SetPedConfigFlag(ped, 185, true) -- Disable damage events
+    SetPedConfigFlag(ped, 108, true) -- Disable melee
+    SetPedConfigFlag(ped, 208, true) -- Don't get out of vehicle when driver leaves
+    
+    -- Task ped to enter vehicle
+    TaskEnterVehicle(ped, busVehicle, 10000, seatIndex, 1.0, 1, 0)
+    
+    -- Add to passengers table
+    local passenger = {
+        ped = ped,
+        seat = seatIndex,
+        destinationStation = currentStationIndex + math.random(1, 3) -- Will exit 1-3 stations later
+    }
+    table.insert(passengers, passenger)
+    currentPassengers = currentPassengers + 1
+    
+    -- Release the model
+    SetModelAsNoLongerNeeded(modelHash)
+    
+    return passenger
+end
+
+-- Function to remove passengers who reached their destination
+local function removePassengersAtStation(stationIndex, busVehicle)
+    local passengersToRemove = {}
+    local passengersRemoved = 0
+    local stationEarnings = 0
+    
+    -- Find passengers who need to exit at this station
+    for i, passenger in ipairs(passengers) do
+        if passenger.destinationStation == stationIndex then
+            table.insert(passengersToRemove, i)
+            
+            -- Task ped to leave vehicle
+            TaskLeaveVehicle(passenger.ped, busVehicle, 0)
+            
+            -- Make ped walk away
+            local busCoords = GetEntityCoords(busVehicle)
+            local randomPos = vector3(
+                busCoords.x + math.random(-15, 15), 
+                busCoords.y + math.random(-15, 15), 
+                busCoords.z
+            )
+            TaskGoStraightToCoord(passenger.ped, randomPos.x, randomPos.y, randomPos.z, 1.0, -1, 0.0, 0.0)
+            
+            -- Schedule deletion after walking away
+            SetTimeout(10000, function()
+                if DoesEntityExist(passenger.ped) then
+                    DeletePed(passenger.ped)
+                end
+            end)
+            
+            passengersRemoved = passengersRemoved + 1
+            
+            -- Add reward for each passenger that reaches their destination
+            stationEarnings = stationEarnings + passengerReward
+            totalEarnings = totalEarnings + passengerReward
+        end
+    end
+    
+    -- Remove passengers from table (in reverse order to avoid index issues)
+    for i = #passengersToRemove, 1, -1 do
+        table.remove(passengers, passengersToRemove[i])
+    end
+    
+    currentPassengers = currentPassengers - passengersRemoved
+    
+    -- If passengers were removed and earned money, show notification
+    if passengersRemoved > 0 then
+        TriggerServerEvent('bus_m4:server:addMoney', stationEarnings)
+        QBCore.Functions.Notify('You earned $' .. stationEarnings .. ' from ' .. passengersRemoved .. ' passengers!', 'success')
+    end
+    
+    return passengersRemoved
+end
+
+-- Function to add new passengers at a station
+local function addPassengersAtStation(busVehicle, stationIndex)
+    -- Determine how many passengers to add (1-4 random passengers)
+    local passengersToAdd = math.random(1, 4)
+    local passengersAdded = 0
+    
+    -- Find available seats
+    local availableSeats = {}
+    for _, seatIndex in ipairs(passengerSeats) do
+        local isOccupied = false
+        for _, passenger in ipairs(passengers) do
+            if passenger.seat == seatIndex then
+                isOccupied = true
+                break
+            end
+        end
+        if not isOccupied then
+            table.insert(availableSeats, seatIndex)
+        end
+    end
+    
+    -- Add passengers until we reach the limit or run out of seats
+    for i = 1, math.min(passengersToAdd, #availableSeats) do
+        if currentPassengers < maxPassengers then
+            local seatIndex = table.remove(availableSeats, math.random(1, #availableSeats))
+            local passenger = createPassenger(busVehicle, seatIndex)
+            if passenger then
+                passengersAdded = passengersAdded + 1
+            end
+        else
+            break
+        end
+    end
+    
+    return passengersAdded
+end
+
+-- Function to clean up all passengers
+local function cleanupAllPassengers()
+    for _, passenger in ipairs(passengers) do
+        if DoesEntityExist(passenger.ped) then
+            DeletePed(passenger.ped)
+        end
+    end
+    passengers = {}
+    currentPassengers = 0
+end
+
+-- Function to display the dashboard inside the bus
+local function displayDashboard()
+    if not showDashboard or not activeBusLine then return end
+    
+    local playerPed = PlayerPedId()
+    local vehicle = GetVehiclePedIsIn(playerPed, false)
+    
+    if vehicle == 0 or GetEntityModel(vehicle) ~= GetHashKey(busModel) then 
+        showDashboard = false
+        return 
+    end
+    
+    -- Dashboard background
+    DrawRect(0.85, 0.2, 0.2, 0.3, 0, 0, 0, 150)
+    
+    -- Dashboard title
+    SetTextScale(0.4, 0.4)
+    SetTextFont(4)
+    SetTextColour(255, 255, 255, 255)
+    SetTextDropshadow(0, 0, 0, 0, 255)
+    SetTextEdge(1, 0, 0, 0, 255)
+    SetTextDropShadow()
+    SetTextOutline()
+    SetTextCentre(true)
+    SetTextEntry("STRING")
+    AddTextComponentString(activeBusLine.name .. " - Line " .. activeBusLine.number)
+    DrawText(0.85, 0.1)
+    
+    -- Current station info
+    SetTextScale(0.35, 0.35)
+    SetTextFont(4)
+    SetTextColour(255, 255, 255, 255)
+    SetTextDropshadow(0, 0, 0, 0, 255)
+    SetTextEdge(1, 0, 0, 0, 255)
+    SetTextDropShadow()
+    SetTextOutline()
+    SetTextCentre(true)
+    SetTextEntry("STRING")
+    AddTextComponentString("Current Station: " .. currentStationIndex .. "/" .. #activeBusLine.stations)
+    DrawText(0.85, 0.15)
+    
+    -- Next station info
+    SetTextScale(0.35, 0.35)
+    SetTextFont(4)
+    SetTextColour(255, 255, 0, 255) -- Yellow color for next station
+    SetTextDropshadow(0, 0, 0, 0, 255)
+    SetTextEdge(1, 0, 0, 0, 255)
+    SetTextDropShadow()
+    SetTextOutline()
+    SetTextCentre(true)
+    SetTextEntry("STRING")
+    AddTextComponentString("Next Station: " .. nextStationIndex .. "/" .. #activeBusLine.stations)
+    DrawText(0.85, 0.2)
+    
+    -- Distance to next station
+    if nextStationIndex <= #activeBusLine.stations then
+        local nextStation = activeBusLine.stations[nextStationIndex]
+        local playerCoords = GetEntityCoords(playerPed)
+        local distance = math.floor(#(playerCoords - nextStation))
+        
+        SetTextScale(0.35, 0.35)
+        SetTextFont(4)
+        SetTextColour(255, 255, 255, 255)
+        SetTextDropshadow(0, 0, 0, 0, 255)
+        SetTextEdge(1, 0, 0, 0, 255)
+        SetTextDropShadow()
+        SetTextOutline()
+        SetTextCentre(true)
+        SetTextEntry("STRING")
+        AddTextComponentString("Distance: " .. distance .. " m")
+        DrawText(0.85, 0.25)
+    end
+    
+    -- Passenger information
+    SetTextScale(0.35, 0.35)
+    SetTextFont(4)
+    SetTextColour(50, 200, 50, 255) -- Green color for passengers
+    SetTextDropshadow(0, 0, 0, 0, 255)
+    SetTextEdge(1, 0, 0, 0, 255)
+    SetTextDropShadow()
+    SetTextOutline()
+    SetTextCentre(true)
+    SetTextEntry("STRING")
+    AddTextComponentString("Passengers: " .. currentPassengers .. "/" .. maxPassengers)
+    DrawText(0.85, 0.3)
+    
+    -- Earnings information
+    if showEarnings then
+        SetTextScale(0.35, 0.35)
+        SetTextFont(4)
+        SetTextColour(255, 215, 0, 255) -- Gold color for money
+        SetTextDropshadow(0, 0, 0, 0, 255)
+        SetTextEdge(1, 0, 0, 0, 255)
+        SetTextDropShadow()
+        SetTextOutline()
+        SetTextCentre(true)
+        SetTextEntry("STRING")
+        AddTextComponentString("Earnings: $" .. totalEarnings)
+        DrawText(0.85, 0.35)
+    end
+    
+    -- Instructions
+    SetTextScale(0.3, 0.3)
+    SetTextFont(4)
+    SetTextColour(200, 200, 200, 255)
+    SetTextDropshadow(0, 0, 0, 0, 255)
+    SetTextEdge(1, 0, 0, 0, 255)
+    SetTextDropShadow()
+    SetTextOutline()
+    SetTextCentre(true)
+    SetTextEntry("STRING")
+    AddTextComponentString("Press K to open/close doors")
+    DrawText(0.85, 0.4)
+ end
+
 -- Event to spawn bus with line
 RegisterNetEvent('spawnBusWithLine', function(line)
     if not isPlayerBusDriver() then
@@ -171,10 +461,19 @@ RegisterNetEvent('spawnBusWithLine', function(line)
 
     QBCore.Functions.Notify('Bus for ' .. line.name .. ' has been spawned!', 'warning')
     createBlipsForLine(line)
+    
+    -- Initialize dashboard variables
+    activeBusLine = line
+    currentStationIndex = 0
+    nextStationIndex = 1
+    showDashboard = true
 
     CreateThread(function()
         while true do
             for i, station in ipairs(line.stations) do
+                -- Update dashboard variables
+                nextStationIndex = i
+                
                 SetNewWaypoint(station.x, station.y)
                 QBCore.Functions.Notify('GPS route set to station ' .. i .. ' of ' .. line.name, 'success')
                 local reached = false
@@ -185,6 +484,11 @@ RegisterNetEvent('spawnBusWithLine', function(line)
                         reached = true
                     end
                 end
+                
+                -- Update dashboard variables after reaching station
+                currentStationIndex = i
+                nextStationIndex = i < #line.stations and i + 1 or 1
+                
                 QBCore.Functions.Notify('You have reached station ' .. i .. ' of ' .. line.name, 'success')
                 QBCore.Functions.Notify('Press K to open the bus doors.', 'primary')
                 local doorsOpened = false
@@ -194,6 +498,19 @@ RegisterNetEvent('spawnBusWithLine', function(line)
                     if vehicle ~= 0 and GetEntityModel(vehicle) == GetHashKey(busModel) then
                         if GetVehicleDoorLockStatus(vehicle) == 1 then
                             doorsOpened = true
+                            
+                            -- Handle passengers at this station
+                            local passengersLeft = removePassengersAtStation(i, vehicle)
+                            if passengersLeft > 0 then
+                                QBCore.Functions.Notify(passengersLeft .. ' passengers got off the bus.', 'primary')
+                            end
+                            
+                            -- Add new passengers after a short delay
+                            Wait(2000)
+                            local passengersBoarded = addPassengersAtStation(vehicle, i)
+                            if passengersBoarded > 0 then
+                                QBCore.Functions.Notify(passengersBoarded .. ' passengers boarded the bus.', 'primary')
+                            end
                         end
                     end
                 end
@@ -201,6 +518,9 @@ RegisterNetEvent('spawnBusWithLine', function(line)
                 Wait(5000)
             end
             QBCore.Functions.Notify('All stations for ' .. line.name .. ' completed! Restarting.', 'warning')
+            -- Reset dashboard variables for restart
+            currentStationIndex = 0
+            nextStationIndex = 1
         end
     end)
 end)
@@ -210,11 +530,28 @@ local function deleteBus()
     local vehicle = GetVehiclePedIsIn(playerPed, false)
 
     if vehicle ~= 0 and GetEntityModel(vehicle) == GetHashKey(busModel) then
+        -- Clean up all passengers before deleting the bus
+        cleanupAllPassengers()
+        
+        -- Show final earnings notification if earned money
+        if totalEarnings > 0 then
+            QBCore.Functions.Notify('Total earnings from this route: $' .. totalEarnings, 'success')
+        end
+        
         DeleteVehicle(vehicle)
         QBCore.Functions.Notify('Bus deleted!', 'success')
         for _, blip in ipairs(activeBlips) do RemoveBlip(blip) end
         activeBlips = {}
         SetWaypointOff()
+        
+        -- Reset dashboard variables
+        activeBusLine = nil
+        currentStationIndex = 0
+        nextStationIndex = 0
+        showDashboard = false
+        
+        -- Reset earnings
+        totalEarnings = 0
     else
         QBCore.Functions.Notify('You are not in the bus!', 'error')
     end
@@ -291,4 +628,16 @@ CreateThread(function()
     BeginTextCommandSetBlipName("STRING")
     AddTextComponentString("Bus Depot")
     EndTextCommandSetBlipName(blip)
+end)
+
+-- Thread to display the dashboard while driving
+CreateThread(function()
+    while true do
+        Wait(0)
+        if showDashboard and activeBusLine then
+            displayDashboard()
+        else
+            Wait(1000) -- Wait longer if dashboard is not active
+        end
+    end
 end)

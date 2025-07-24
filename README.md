@@ -7,6 +7,12 @@ A dynamic and immersive bus driver job script for QBCore-based FiveM servers.
 - Interactive line selection menu using `qb-menu`
 - Automatic GPS guidance to stations
 - Blips for every station along the route
+- In-bus dashboard displaying route information and next station
+- Real-time distance tracking to the next station
+- Virtual passengers who board and exit at stations
+- Passenger count display on the dashboard
+- Financial rewards for each passenger who completes their journey
+- Total earnings display on the dashboard
 - Ability to open/close bus doors using the `K` key
 - Delete the bus with the `G` key
 - Automatically receive keys upon bus spawn
@@ -44,8 +50,20 @@ ensure m4-busjob
 - Press `E` near the depot to select a bus line.
 - Enter the spawned bus to begin the route.
 - Follow the GPS to each station.
+- Use the **in-bus dashboard** on the right side of your screen to view:
+  - Current route information
+  - Current and next station numbers
+  - Distance to the next station
+  - Current passenger count
+  - Total earnings from passenger fares
+  - Helpful instructions
 - Press `K` to open/close bus doors at stations.
-- Press `G` to delete your bus if needed.
+- When you open doors at a station:
+  - Virtual passengers will exit if it's their destination
+  - You'll earn money for each passenger that completes their journey
+  - New passengers will board the bus
+  - You'll receive notifications about passengers boarding and exiting, including earned money
+- Press `G` to delete your bus if needed. You'll see a final summary of your total earnings.
 
 ---
 
