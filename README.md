@@ -47,9 +47,9 @@ ensure m4-busjob
 - [vehiclekeys](https://github.com/qbcore-framework/qb-vehiclekeys) or compatible key management system
 
 4. **Set the job name (optional):**
-- Open `client.lua` and change the value of `allowedJob` if you want a different job to access the system:
+- Open `config.lua` and change the value of `allowedJob` if you want a different job to access the system:
   ```lua
-  local allowedJob = "busdriver"
+  Config.AllowedJob = "busdriver"
   ```
 
 ---
@@ -88,3 +88,4 @@ If you enjoy this script and want to support my work, you can donate here:
 ## License 📄
 
 This script is provided as-is with no warranty. You may modify it for personal use. Do not re-upload or sell without permission.
+
