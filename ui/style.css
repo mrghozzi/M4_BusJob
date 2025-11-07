@@ -1,0 +1,85 @@
+:root {
+  --accent: 30, 144, 255; /* Default accent color; can be changed from game */
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  color: #fff;
+  background: transparent;
+}
+
+.dashboard {
+  position: fixed;
+  top: 10vh;
+  right: 2vw;
+  width: 18vw;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+.dashboard.hidden { display: none; }
+
+.header {
+  background: rgba(var(--accent), 0.6);
+}
+.title {
+  padding: 12px 16px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.title .sep { opacity: 0.7; }
+
+.content {
+  background: rgba(15, 15, 15, 0.2);
+  padding: 14px 16px 10px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+.row span { font-size: 14px; }
+
+.progress {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 10px;
+  border-radius: 6px;
+  background: #2c2c2c;
+  overflow: hidden;
+  margin-top: 6px;
+}
+.progress .fill {
+  height: 100%;
+  width: 0%;
+  background: rgba(var(--accent), 0.75);
+  transition: width 180ms ease-in-out;
+}
+
+.footer {
+  background: rgba(15, 15, 15, 0.2);
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.hint { color: #cfcfcf; font-size: 12px; }
+
+/* Responsive tweaks for smaller screens */
+@media (max-width: 1400px) {
+  .dashboard { width: 20vw; }
+}
+@media (max-width: 1200px) {
+  .dashboard { width: 22vw; }
+}

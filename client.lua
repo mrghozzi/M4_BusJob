@@ -1,122 +1,35 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 
-local allowedJob = "busdriver" -- Change this to the job name you want to allowedJob 
+-- Config variables loaded from global Config (set in config.lua)
+local allowedJob = Config.AllowedJob
+local busSpawnLocation = Config.BusSpawnLocation
+local busModel = Config.BusModel
+local maxPassengers = Config.MaxPassengers
+local passengerReward = Config.PassengerReward
+local passengerModels = Config.PassengerModels
+local passengerSeats = Config.PassengerSeats
+local busLines = Config.BusLines
 
-local function isPlayerBusDriver()
-    local PlayerData = QBCore.Functions.GetPlayerData()
-    return PlayerData and PlayerData.job and PlayerData.job.name == allowedJob
-end
-
-local busSpawnLocation = vector3(452.31, -583.75, 28.5) -- Bus Depot
-local busModel = 'bus'
-
--- Dashboard variables
+-- Runtime state variables
 local activeBusLine = nil
 local currentStationIndex = 0
 local nextStationIndex = 0
 local showDashboard = false
+local currentBusEntity = nil
 
--- Passenger variables
+-- Passenger state
 local passengers = {}
-local maxPassengers = 15
 local currentPassengers = 0
-local passengerModels = {'a_f_m_beach_01', 'a_f_m_bevhills_01', 'a_f_m_bevhills_02', 'a_f_m_bodybuild_01', 'a_f_m_business_02', 'a_f_m_downtown_01', 'a_f_m_eastsa_01', 'a_f_m_eastsa_02', 'a_f_m_fatbla_01', 'a_f_m_fatwhite_01', 'a_f_m_ktown_01', 'a_f_m_ktown_02', 'a_f_m_prolhost_01', 'a_f_m_salton_01', 'a_f_m_skidrow_01', 'a_f_m_soucent_01', 'a_f_m_soucent_02', 'a_f_m_soucentmc_01', 'a_f_m_tourist_01', 'a_f_m_tramp_01', 'a_f_m_trampbeac_01', 'a_f_o_genstreet_01', 'a_f_o_indian_01', 'a_f_o_ktown_01', 'a_f_o_salton_01', 'a_f_o_soucent_01', 'a_f_o_soucent_02', 'a_f_y_beach_01', 'a_f_y_bevhills_01', 'a_f_y_bevhills_02', 'a_f_y_bevhills_03', 'a_f_y_bevhills_04', 'a_f_y_business_01', 'a_f_y_business_02', 'a_f_y_business_03', 'a_f_y_business_04', 'a_f_y_eastsa_01', 'a_f_y_eastsa_02', 'a_f_y_eastsa_03', 'a_f_y_epsilon_01', 'a_f_y_fitness_01', 'a_f_y_fitness_02', 'a_f_y_genhot_01', 'a_f_y_golfer_01', 'a_f_y_hiker_01', 'a_f_y_hippie_01', 'a_f_y_hipster_01', 'a_f_y_hipster_02', 'a_f_y_hipster_03', 'a_f_y_hipster_04', 'a_f_y_indian_01', 'a_f_y_juggalo_01', 'a_f_y_runner_01', 'a_f_y_rurmeth_01', 'a_f_y_scdressy_01', 'a_f_y_skater_01', 'a_f_y_soucent_01', 'a_f_y_soucent_02', 'a_f_y_soucent_03', 'a_f_y_tennis_01', 'a_f_y_topless_01', 'a_f_y_tourist_01', 'a_f_y_tourist_02', 'a_f_y_vinewood_01', 'a_f_y_vinewood_02', 'a_f_y_vinewood_03', 'a_f_y_vinewood_04', 'a_f_y_yoga_01', 'a_m_m_acult_01', 'a_m_m_afriamer_01', 'a_m_m_beach_01', 'a_m_m_beach_02', 'a_m_m_bevhills_01', 'a_m_m_bevhills_02', 'a_m_m_business_01', 'a_m_m_eastsa_01', 'a_m_m_eastsa_02', 'a_m_m_farmer_01', 'a_m_m_fatlatin_01', 'a_m_m_genfat_01', 'a_m_m_genfat_02', 'a_m_m_golfer_01', 'a_m_m_hasjew_01', 'a_m_m_hillbilly_01', 'a_m_m_hillbilly_02', 'a_m_m_indian_01', 'a_m_m_ktown_01', 'a_m_m_malibu_01', 'a_m_m_mexcntry_01', 'a_m_m_mexlabor_01', 'a_m_m_og_boss_01', 'a_m_m_paparazzi_01', 'a_m_m_polynesian_01', 'a_m_m_prolhost_01', 'a_m_m_rurmeth_01', 'a_m_m_salton_01', 'a_m_m_salton_02', 'a_m_m_salton_03', 'a_m_m_salton_04', 'a_m_m_skater_01', 'a_m_m_skidrow_01', 'a_m_m_socenlat_01', 'a_m_m_soucent_01', 'a_m_m_soucent_02', 'a_m_m_soucent_03', 'a_m_m_soucent_04', 'a_m_m_stlat_02', 'a_m_m_tennis_01', 'a_m_m_tourist_01', 'a_m_m_tramp_01', 'a_m_m_trampbeac_01', 'a_m_m_tranvest_01', 'a_m_m_tranvest_02', 'a_m_o_acult_01', 'a_m_o_acult_02', 'a_m_o_beach_01', 'a_m_o_genstreet_01', 'a_m_o_ktown_01', 'a_m_o_salton_01', 'a_m_o_soucent_01', 'a_m_o_soucent_02', 'a_m_o_soucent_03', 'a_m_o_tramp_01', 'a_m_y_acult_01', 'a_m_y_acult_02', 'a_m_y_beach_01', 'a_m_y_beach_02', 'a_m_y_beach_03', 'a_m_y_beachvesp_01', 'a_m_y_beachvesp_02', 'a_m_y_bevhills_01', 'a_m_y_bevhills_02', 'a_m_y_breakdance_01', 'a_m_y_busicas_01', 'a_m_y_business_01', 'a_m_y_business_02', 'a_m_y_business_03', 'a_m_y_cyclist_01', 'a_m_y_dhill_01', 'a_m_y_downtown_01', 'a_m_y_eastsa_01', 'a_m_y_eastsa_02', 'a_m_y_epsilon_01', 'a_m_y_epsilon_02', 'a_m_y_gay_01', 'a_m_y_gay_02', 'a_m_y_genstreet_01', 'a_m_y_genstreet_02', 'a_m_y_golfer_01', 'a_m_y_hasjew_01', 'a_m_y_hiker_01', 'a_m_y_hippy_01', 'a_m_y_hipster_01', 'a_m_y_hipster_02', 'a_m_y_hipster_03', 'a_m_y_indian_01', 'a_m_y_jetski_01', 'a_m_y_juggalo_01', 'a_m_y_ktown_01', 'a_m_y_ktown_02', 'a_m_y_latino_01', 'a_m_y_methhead_01', 'a_m_y_mexthug_01', 'a_m_y_motox_01', 'a_m_y_motox_02', 'a_m_y_musclbeac_01', 'a_m_y_musclbeac_02', 'a_m_y_polynesian_01', 'a_m_y_roadcyc_01', 'a_m_y_runner_01', 'a_m_y_runner_02', 'a_m_y_salton_01', 'a_m_y_skater_01', 'a_m_y_skater_02', 'a_m_y_soucent_01', 'a_m_y_soucent_02', 'a_m_y_soucent_03', 'a_m_y_soucent_04', 'a_m_y_stbla_01', 'a_m_y_stbla_02', 'a_m_y_stlat_01', 'a_m_y_stwhi_01', 'a_m_y_stwhi_02', 'a_m_y_sunbathe_01', 'a_m_y_surfer_01', 'a_m_y_vindouche_01', 'a_m_y_vinewood_01', 'a_m_y_vinewood_02', 'a_m_y_vinewood_03', 'a_m_y_vinewood_04', 'a_m_y_yoga_01'}
-local passengerSeats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14} -- Seat indices for bus
 
--- Reward variables
-local passengerReward = 15 -- Amount of money earned per passenger
-local totalEarnings = 0 -- Total earnings in current session
-local showEarnings = true -- Whether to show earnings on dashboard
+-- Earnings state
+local totalEarnings = 0
+local showEarnings = true
 
-local busLines = {
-    {
-        name = 'South Loop', number = 1, color = {r = 255, g = 0, b = 0}, 
-        stations = {
-            vector3(465.98, -632.11, 28.5), -- Bus Depot
-            vector3(309.64, -765.13, 29.31), -- Station 1
-            vector3(269.74, -1220.24, 29.51), -- Station 2
-            vector3(-106.16, -1689.55, 29.32), -- Station 3
-            vector3(-142.1, -1975.86, 22.82), -- Station 4
-            vector3(200.29, -1972.3, 19.33), -- Station 5
-            vector3(442.45, -1683.33, 28.75), -- Station 6
-            vector3(468.06, -1413.67, 28.74),   -- Station 7
-            vector3(269.72, -1220.39, 29.0),    -- Station 8
-            vector3(358.17, -1061.67, 28.82),    -- Station 9
-            vector3(471.82, -826.59, 25.81) -- Station 10
-        }
-    },    
-    {
-        name = 'Vespucci Line', number = 2, color = {r = 0, g = 0, b = 255},
-        stations = {
-            vector3(465.98, -632.11, 28.5), -- Bus Depot
-            vector3(309.64, -765.13, 29.31), -- Station 1
-            vector3(114.78, -787.79, 31.42), -- Station 2
-            vector3(-170.96, -820.02, 30.7), -- Station 3
-            vector3(-273.25, -823.37, 31.37), -- Station 4
-            vector3(-598.03, -649.42, 31.5), -- Station 5
-            vector3(-933.62, -461.04, 36.73), -- Station 6
-            vector3(-1158.26, -401.45, 35.37), -- Station 7
-            vector3(-1408.38, -571.79, 29.91), -- Station 8
-            vector3(-1210.48, -1218.54, 7.23), -- Station 9
-            vector3(-1167.78, -1468.44, 3.92), -- Station 10
-            vector3(-1143.69, -1367.62, 4.63), -- Station 11
-            vector3(-1255.36, -1030.5, 8.4), -- Station 12
-            vector3(-1477.36, -629.93, 30.19), -- Station 13
-            vector3(-1046.96, -387.6, 37.16), -- Station 14
-            vector3(-692.09, -666.17, 30.45), -- Station 15
-            vector3(-506.18, -665.73, 32.66), -- Station 16
-            vector3(-241.58, -716.72, 33.03), -- Station 17
-            vector3(-248.92, -880.45, 30.23), -- Station 18
-            vector3(214.55, -847.17, 29.86), -- Station 19
-            vector3(309.64, -765.13, 29.31),  -- Station 20
-            vector3(471.82, -826.59, 25.81) -- Station 21
-        }
-    },
-    {
-        name = 'University Route', number = 3, color = {r = 0, g = 255, b = 0},
-        stations = {
-            vector3(1843.2, 3682.3, 34.3),
-            vector3(1461.7, 3570.6, 34.4),
-            vector3(989.2, 1567.3, 34.8),
-            vector3(462.3, 1315.6, 30.9),
-            vector3(260.1, 1193.3, 224.2),
-            vector3(-161.6, 937.5, 234.0)
-        }
-    },
-    {
-        name = 'Industrial Circle', number = 4, color = {r = 255, g = 255, b = 0},
-        stations = {
-            vector3(1122.1, -3197.1, -40.4),
-            vector3(880.2, -2351.9, 29.3),
-            vector3(814.7, -1237.3, 26.0),
-            vector3(763.2, -885.2, 25.1),
-            vector3(960.3, -539.6, 58.9),
-            vector3(2744.6, 1501.8, 24.5)
-        }
-    },
-    {
-        name = 'Rural Shuttle', number = 5, color = {r = 128, g = 0, b = 128},
-        stations = {
-            vector3(1702.4, 4916.5, 42.1),
-            vector3(1965.6, 5184.3, 47.9),
-            vector3(1842.3, 3655.5, 34.2),
-            vector3(1152.4, 2653.9, 37.7),
-            vector3(-180.2, 6271.4, 31.5),
-            vector3(-2122.4, 3245.2, 32.8)
-        }
-    },
-    {
-        name = 'Tourist Loop', number = 6, color = {r = 255, g = 165, b = 0},
-        stations = {
-            vector3(-1612.9, -1024.5, 13.0),
-            vector3(-1305.5, 252.3, 62.1),
-            vector3(711.1, 1197.6, 325.4),
-            vector3(364.9, 282.5, 103.6),
-            vector3(1069.4, -686.6, 58.3),
-            vector3(-1028.3, -1003.8, 1.0)
-        }
-    }
-}
+-- Check if the player has the allowed job
+local function isPlayerBusDriver()
+    local PlayerData = QBCore.Functions.GetPlayerData()
+    return PlayerData and PlayerData.job and PlayerData.job.name == allowedJob
+end
 
 local activeBlips = {}
 
@@ -322,118 +235,46 @@ end
 
 -- Function to display the dashboard inside the bus
 local function displayDashboard()
-    if not showDashboard or not activeBusLine then return end
-    
+    if not showDashboard or not activeBusLine then
+        SendNUIMessage({ type = 'bus_dashboard_visible', visible = false })
+        return
+    end
+
     local playerPed = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(playerPed, false)
-    
-    if vehicle == 0 or GetEntityModel(vehicle) ~= GetHashKey(busModel) then 
-        showDashboard = false
-        return 
+    if vehicle == 0 or (currentBusEntity and vehicle ~= currentBusEntity) or GetEntityModel(vehicle) ~= GetHashKey(busModel) then
+        -- لا تقم بإطفاء الحالة العامة للوحة لتجنب حالات السباق عند الإدخال للحافلة
+        SendNUIMessage({ type = 'bus_dashboard_visible', visible = false })
+        return
     end
-    
-    -- Dashboard background
-    DrawRect(0.85, 0.2, 0.2, 0.3, 0, 0, 0, 150)
-    
-    -- Dashboard title
-    SetTextScale(0.4, 0.4)
-    SetTextFont(4)
-    SetTextColour(255, 255, 255, 255)
-    SetTextDropshadow(0, 0, 0, 0, 255)
-    SetTextEdge(1, 0, 0, 0, 255)
-    SetTextDropShadow()
-    SetTextOutline()
-    SetTextCentre(true)
-    SetTextEntry("STRING")
-    AddTextComponentString(activeBusLine.name .. " - Line " .. activeBusLine.number)
-    DrawText(0.85, 0.1)
-    
-    -- Current station info
-    SetTextScale(0.35, 0.35)
-    SetTextFont(4)
-    SetTextColour(255, 255, 255, 255)
-    SetTextDropshadow(0, 0, 0, 0, 255)
-    SetTextEdge(1, 0, 0, 0, 255)
-    SetTextDropShadow()
-    SetTextOutline()
-    SetTextCentre(true)
-    SetTextEntry("STRING")
-    AddTextComponentString("Current Station: " .. currentStationIndex .. "/" .. #activeBusLine.stations)
-    DrawText(0.85, 0.15)
-    
-    -- Next station info
-    SetTextScale(0.35, 0.35)
-    SetTextFont(4)
-    SetTextColour(255, 255, 0, 255) -- Yellow color for next station
-    SetTextDropshadow(0, 0, 0, 0, 255)
-    SetTextEdge(1, 0, 0, 0, 255)
-    SetTextDropShadow()
-    SetTextOutline()
-    SetTextCentre(true)
-    SetTextEntry("STRING")
-    AddTextComponentString("Next Station: " .. nextStationIndex .. "/" .. #activeBusLine.stations)
-    DrawText(0.85, 0.2)
-    
-    -- Distance to next station
+
+    local distance = 0
     if nextStationIndex <= #activeBusLine.stations then
         local nextStation = activeBusLine.stations[nextStationIndex]
         local playerCoords = GetEntityCoords(playerPed)
-        local distance = math.floor(#(playerCoords - nextStation))
-        
-        SetTextScale(0.35, 0.35)
-        SetTextFont(4)
-        SetTextColour(255, 255, 255, 255)
-        SetTextDropshadow(0, 0, 0, 0, 255)
-        SetTextEdge(1, 0, 0, 0, 255)
-        SetTextDropShadow()
-        SetTextOutline()
-        SetTextCentre(true)
-        SetTextEntry("STRING")
-        AddTextComponentString("Distance: " .. distance .. " m")
-        DrawText(0.85, 0.25)
+        distance = math.floor(#(playerCoords - nextStation))
     end
-    
-    -- Passenger information
-    SetTextScale(0.35, 0.35)
-    SetTextFont(4)
-    SetTextColour(50, 200, 50, 255) -- Green color for passengers
-    SetTextDropshadow(0, 0, 0, 0, 255)
-    SetTextEdge(1, 0, 0, 0, 255)
-    SetTextDropShadow()
-    SetTextOutline()
-    SetTextCentre(true)
-    SetTextEntry("STRING")
-    AddTextComponentString("Passengers: " .. currentPassengers .. "/" .. maxPassengers)
-    DrawText(0.85, 0.3)
-    
-    -- Earnings information
-    if showEarnings then
-        SetTextScale(0.35, 0.35)
-        SetTextFont(4)
-        SetTextColour(255, 215, 0, 255) -- Gold color for money
-        SetTextDropshadow(0, 0, 0, 0, 255)
-        SetTextEdge(1, 0, 0, 0, 255)
-        SetTextDropShadow()
-        SetTextOutline()
-        SetTextCentre(true)
-        SetTextEntry("STRING")
-        AddTextComponentString("Earnings: $" .. totalEarnings)
-        DrawText(0.85, 0.35)
-    end
-    
-    -- Instructions
-    SetTextScale(0.3, 0.3)
-    SetTextFont(4)
-    SetTextColour(200, 200, 200, 255)
-    SetTextDropshadow(0, 0, 0, 0, 255)
-    SetTextEdge(1, 0, 0, 0, 255)
-    SetTextDropShadow()
-    SetTextOutline()
-    SetTextCentre(true)
-    SetTextEntry("STRING")
-    AddTextComponentString("Press K to open/close doors")
-    DrawText(0.85, 0.4)
- end
+
+    local accent = activeBusLine.color or { r = 30, g = 144, b = 255 }
+    local maxP = maxPassengers or (Config and Config.MaxPassengers) or 0
+
+    SendNUIMessage({
+        type = 'bus_dashboard_update',
+        lineName = activeBusLine.name,
+        lineNumber = activeBusLine.number,
+        currentStationIndex = currentStationIndex,
+        nextStationIndex = nextStationIndex,
+        totalStations = #activeBusLine.stations,
+        distanceToNext = distance,
+        currentPassengers = currentPassengers or 0,
+        maxPassengers = maxP,
+        totalEarnings = totalEarnings or 0,
+        showEarnings = showEarnings or false,
+        color = accent
+    })
+
+    SendNUIMessage({ type = 'bus_dashboard_visible', visible = true })
+end
 
 -- Event to spawn bus with line
 RegisterNetEvent('spawnBusWithLine', function(line)
@@ -454,6 +295,7 @@ RegisterNetEvent('spawnBusWithLine', function(line)
     while not HasModelLoaded(busModel) do Wait(0) end
 
     local bus = CreateVehicle(GetHashKey(busModel), busSpawnLocation.x, busSpawnLocation.y, busSpawnLocation.z, 263.27, true, false)
+    currentBusEntity = bus
     SetVehicleCustomPrimaryColour(bus, line.color.r, line.color.g, line.color.b)
     TaskWarpPedIntoVehicle(playerPed, bus, -1)
     TriggerEvent("vehiclekeys:client:SetOwner", GetVehicleNumberPlateText(bus)) -- Set the vehicle keys
@@ -539,6 +381,7 @@ local function deleteBus()
         end
         
         DeleteVehicle(vehicle)
+        currentBusEntity = nil
         QBCore.Functions.Notify('Bus deleted!', 'success')
         for _, blip in ipairs(activeBlips) do RemoveBlip(blip) end
         activeBlips = {}
@@ -549,6 +392,8 @@ local function deleteBus()
         currentStationIndex = 0
         nextStationIndex = 0
         showDashboard = false
+        -- Ensure NUI dashboard is hidden when bus is deleted
+        SendNUIMessage({ type = 'bus_dashboard_visible', visible = false })
         
         -- Reset earnings
         totalEarnings = 0
@@ -639,5 +484,21 @@ CreateThread(function()
         else
             Wait(1000) -- Wait longer if dashboard is not active
         end
+    end
+end)
+
+-- Hide dashboard when player job changes away from allowed job
+RegisterNetEvent('QBCore:Client:OnJobUpdate', function(job)
+    if job and job.name ~= allowedJob then
+        showDashboard = false
+        activeBusLine = nil
+        SendNUIMessage({ type = 'bus_dashboard_visible', visible = false })
+    end
+end)
+
+-- Hide dashboard cleanly when resource stops to avoid stuck UI
+AddEventHandler('onResourceStop', function(res)
+    if res == GetCurrentResourceName() then
+        SendNUIMessage({ type = 'bus_dashboard_visible', visible = false })
     end
 end)

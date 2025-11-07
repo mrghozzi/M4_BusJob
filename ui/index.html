@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bus Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="bus-dashboard" class="dashboard hidden">
+    <div class="header">
+      <div class="title">
+        <span id="line-name">Line</span>
+        <span class="sep">|</span>
+        <span id="line-number">0</span>
+      </div>
+    </div>
+    <div class="content">
+      <div class="row"><span>Current Station</span><span id="current-station">0/0</span></div>
+      <div class="row"><span>Next Station</span><span id="next-station">0/0</span></div>
+      <div class="row"><span>Distance</span><span id="distance">0 m</span></div>
+
+      <div class="row">
+        <span>Passengers</span>
+        <span id="passengers">0/0</span>
+        <div class="progress">
+          <div class="fill" id="passenger-fill"></div>
+        </div>
+      </div>
+
+      <div class="row" id="earnings-row" style="display: none;">
+        <span>Earnings</span>
+        <span id="earnings">$0</span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="hint">[K] Open/Close doors</span>
+      <span class="hint">[G] Delete bus</span>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    // Hide the dashboard on initial page load
+    document.getElementById('bus-dashboard').classList.add('hidden')
+  </script>
+</body>
+</html>

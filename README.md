@@ -22,13 +22,23 @@ A dynamic and immersive bus driver job script for QBCore-based FiveM servers.
 
 ---
 
+## What's New in 1.4
+
+- Dashboard auto-hides when the bus is deleted and when the player changes job away from `busdriver`.
+- More robust dashboard visibility logic using `currentBusEntity` to avoid race conditions and ensure it only shows inside the spawned bus.
+- NUI UI fully translated to English; distance unit set to meters (`m`).
+- Compact dashboard size with more transparent background for a cleaner look.
+- Dashboard hides cleanly on resource stop to prevent stuck UI elements.
+
+---
+
 ## Installation 📦
 
 1. **Download or Clone** this repository into your `resources` folder.
 2. **Add the following line** to your `server.cfg`:
 
-``` 
-ensure m4-busjob 
+```
+ensure m4-busjob
 ```
 
 3. **Make sure you have the following dependencies installed:**
