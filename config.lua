@@ -72,45 +72,45 @@ Config.BusLines = {
     {
         name = 'University Route', number = 3, color = {r = 0, g = 255, b = 0},
         stations = {
-            vector3(1843.2, 3682.3, 34.3),
-            vector3(1461.7, 3570.6, 34.4),
-            vector3(989.2, 1567.3, 34.8),
-            vector3(462.3, 1315.6, 30.9),
-            vector3(260.1, 1193.3, 224.2),
-            vector3(-161.6, 937.5, 234.0)
+            vector3(1843.2, 3682.3, 34.3), -- Bus Depot
+            vector3(1461.7, 3570.6, 34.4), -- Station 1
+            vector3(989.2, 1567.3, 34.8), -- Station 2
+            vector3(462.3, 1315.6, 30.9), -- Station 3
+            vector3(260.1, 1193.3, 224.2), -- Station 4
+            vector3(-161.6, 937.5, 234.0) -- Station 5
         }
     },
     {
         name = 'Industrial Circle', number = 4, color = {r = 255, g = 255, b = 0},
         stations = {
-            vector3(1122.1, -3197.1, -40.4),
-            vector3(880.2, -2351.9, 29.3),
-            vector3(814.7, -1237.3, 26.0),
-            vector3(763.2, -885.2, 25.1),
-            vector3(960.3, -539.6, 58.9),
-            vector3(2744.6, 1501.8, 24.5)
+            vector3(1122.1, -3197.1, -40.4), -- Bus Depot
+            vector3(880.2, -2351.9, 29.3), -- Station 1
+            vector3(814.7, -1237.3, 26.0), -- Station 2
+            vector3(763.2, -885.2, 25.1), -- Station 3
+            vector3(960.3, -539.6, 58.9), -- Station 4
+            vector3(2744.6, 1501.8, 24.5) -- Station 5
         }
     },
     {
         name = 'Rural Shuttle', number = 5, color = {r = 128, g = 0, b = 128},
         stations = {
-            vector3(1702.4, 4916.5, 42.1),
-            vector3(1965.6, 5184.3, 47.9),
-            vector3(1842.3, 3655.5, 34.2),
-            vector3(1152.4, 2653.9, 37.7),
-            vector3(-180.2, 6271.4, 31.5),
-            vector3(-2122.4, 3245.2, 32.8)
+            vector3(1702.4, 4916.5, 42.1), -- Bus Depot
+            vector3(1965.6, 5184.3, 47.9), -- Station 1
+            vector3(1842.3, 3655.5, 34.2), -- Station 2
+            vector3(1152.4, 2653.9, 37.7), -- Station 3
+            vector3(-180.2, 6271.4, 31.5), -- Station 4
+            vector3(-2122.4, 3245.2, 32.8) -- Station 5
         }
     },
     {
         name = 'Tourist Loop', number = 6, color = {r = 255, g = 165, b = 0},
         stations = {
-            vector3(-1612.9, -1024.5, 13.0),
-            vector3(-1305.5, 252.3, 62.1),
-            vector3(711.1, 1197.6, 325.4),
-            vector3(364.9, 282.5, 103.6),
-            vector3(1069.4, -686.6, 58.3),
-            vector3(-1028.3, -1003.8, 1.0)
+            vector3(-1612.9, -1024.5, 13.0), -- Bus Depot
+            vector3(-1305.5, 252.3, 62.1), -- Station 1
+            vector3(711.1, 1197.6, 325.4), -- Station 2
+            vector3(364.9, 282.5, 103.6), -- Station 3
+            vector3(1069.4, -686.6, 58.3), -- Station 4
+            vector3(-1028.3, -1003.8, 1.0) -- Station 5
         }
     }
 }
