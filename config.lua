@@ -15,6 +15,77 @@ Config.BusModel = 'bus'
 -- Passenger settings
 Config.MaxPassengers = 15
 Config.PassengerReward = 15 -- Amount of money earned per passenger
+Config.RouteCompletionBonus = 500 -- Bonus for completing the route
+
+-- Discord Webhook Settings
+Config.Webhook = "" -- Paste your Discord Webhook URL here
+
+-- Passenger Chatter
+Config.Chatter = {
+    Enter = {
+        "Good morning, driver!",
+        "Finally, the bus is here.",
+        "To the city center, please.",
+        "Nice bus!",
+        "Am I late?",
+        "Can I pay with card?",
+        "Is this the right bus?",
+        "Hello!",
+    },
+    Exit = {
+        "Thank you!",
+        "Have a nice day!",
+        "See you later.",
+        "This is my stop.",
+        "Thanks for the ride.",
+        "Bye bye!",
+        "Keep the change.",
+        "Safe driving!",
+    }
+}
+
+-- Target settings
+Config.UseTarget = true
+
+-- Damage settings
+Config.DamagePenalty = 50 -- Amount to deduct if bus is damaged below 900 engine health
+
+-- Uniform settings
+Config.ClothingNPC = {
+    model = 's_m_y_garbage',
+    coords = vector4(463.52, -574.41, 27.5, 134.29)
+}
+
+Config.Uniforms = {
+    male = {
+        outfitData = {
+            ['t-shirt'] = {item = 59, texture = 0},
+            ['torso2'] = {item = 31, texture = 0},
+            ['decals'] = {item = 0, texture = 0},
+            ['arms'] = {item = 4, texture = 0},
+            ['pants'] = {item = 36, texture = 0},
+            ['shoes'] = {item = 10, texture = 0},
+            ['hat'] = {item = -1, texture = 0},
+            ['accessory'] = {item = -1, texture = 0},
+            ['ear'] = {item = -1, texture = 0},
+            ['mask'] = {item = 0, texture = 0},
+        }
+    },
+    female = {
+        outfitData = {
+            ['t-shirt'] = {item = 36, texture = 0},
+            ['torso2'] = {item = 58, texture = 0},
+            ['decals'] = {item = 0, texture = 0},
+            ['arms'] = {item = 4, texture = 0},
+            ['pants'] = {item = 35, texture = 0},
+            ['shoes'] = {item = 6, texture = 0},
+            ['hat'] = {item = -1, texture = 0},
+            ['accessory'] = {item = -1, texture = 0},
+            ['ear'] = {item = -1, texture = 0},
+            ['mask'] = {item = 0, texture = 0},
+        }
+    }
+}
 
 -- Passenger models
 Config.PassengerModels = {

@@ -4,7 +4,7 @@ game 'gta5'
 author 'MrGhozzi'
 description 'A QBCore bus job script with dynamic lines, GPS routing, in-bus dashboard, virtual passengers, financial rewards, and realistic depot interaction.'
 
-version '1.4'
+version '1.5'
 
 ui_page 'ui/index.html'
 
@@ -21,4 +21,10 @@ client_scripts {
 
 server_scripts {
     'server.lua'
+}
+
+dependencies {
+    'qb-core',
+    'qb-target',
+    'qb-menu'
 }

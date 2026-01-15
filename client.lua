@@ -33,6 +33,21 @@ end
 
 local activeBlips = {}
 
+local function setUniform()
+    if not Config.Uniforms then return end
+    local playerPed = PlayerPedId()
+    local gender = QBCore.Functions.GetPlayerData().charinfo.gender
+    local uniform = (gender == 1) and Config.Uniforms.female or Config.Uniforms.male
+    
+    if uniform then
+        TriggerEvent('qb-clothing:client:loadOutfit', uniform)
+    end
+end
+
+local function resetUniform()
+    TriggerServerEvent("qb-clothes:loadPlayerSkin")
+end
+
 local function showBusLinesMenu()
     if not isPlayerBusDriver() then
         QBCore.Functions.Notify('You are not a bus driver!', 'error')
@@ -74,6 +89,23 @@ local function createBlipsForLine(line)
         EndTextCommandSetBlipName(blip)
         table.insert(activeBlips, blip)
     end
+end
+
+local function showFloatingText(ped, text)
+    CreateThread(function()
+        local displayTime = 3000
+        local startTime = GetGameTimer()
+        
+        while GetGameTimer() - startTime < displayTime do
+            Wait(0)
+            if DoesEntityExist(ped) then
+                local coords = GetPedBoneCoords(ped, 12844, 0.0, 0.0, 0.0) -- Head bone
+                QBCore.Functions.DrawText3D(coords.x, coords.y, coords.z + 0.5, text)
+            else
+                break
+            end
+        end
+    end)
 end
 
 -- Function to create a random passenger ped
@@ -299,11 +331,14 @@ RegisterNetEvent('spawnBusWithLine', function(line)
     SetVehicleCustomPrimaryColour(bus, line.color.r, line.color.g, line.color.b)
     TaskWarpPedIntoVehicle(playerPed, bus, -1)
     TriggerEvent("vehiclekeys:client:SetOwner", GetVehicleNumberPlateText(bus)) -- Set the vehicle keys
+    exports['LegacyFuel']:SetFuel(bus, 100.0) -- Set fuel to 100%
     SetModelAsNoLongerNeeded(busModel)
 
     QBCore.Functions.Notify('Bus for ' .. line.name .. ' has been spawned!', 'warning')
     createBlipsForLine(line)
     
+    setUniform()
+
     -- Initialize dashboard variables
     activeBusLine = line
     currentStationIndex = 0
@@ -360,6 +395,13 @@ RegisterNetEvent('spawnBusWithLine', function(line)
                 Wait(5000)
             end
             QBCore.Functions.Notify('All stations for ' .. line.name .. ' completed! Restarting.', 'warning')
+            
+            -- Route Completion Bonus
+            if Config.RouteCompletionBonus then
+                 TriggerServerEvent('bus_m4:server:finishRoute', Config.RouteCompletionBonus, line.name)
+                 QBCore.Functions.Notify('You received a $' .. Config.RouteCompletionBonus .. ' bonus for completing the route!', 'success')
+            end
+            
             -- Reset dashboard variables for restart
             currentStationIndex = 0
             nextStationIndex = 1
@@ -387,6 +429,8 @@ local function deleteBus()
         activeBlips = {}
         SetWaypointOff()
         
+        -- resetUniform() -- Removed auto reset uniform
+
         -- Reset dashboard variables
         activeBusLine = nil
         currentStationIndex = 0
@@ -431,12 +475,44 @@ CreateThread(function()
     end
 end)
 
+RegisterNetEvent('bus_m4:client:openMenu', function()
+    local vehicle = GetVehiclePedIsIn(PlayerPedId(), false)
+    if vehicle ~= 0 and GetEntityModel(vehicle) == GetHashKey(busModel) then
+        deleteBus()
+    else
+        showBusLinesMenu()
+    end
+end)
+
 CreateThread(function()
+    if Config.UseTarget then
+        exports['qb-target']:AddBoxZone("BusDepot", busSpawnLocation, 5.0, 5.0, {
+            name = "BusDepot",
+            heading = 0,
+            debugPoly = false,
+            minZ = busSpawnLocation.z - 2,
+            maxZ = busSpawnLocation.z + 2,
+        }, {
+            options = {
+                {
+                    type = "client",
+                    event = "bus_m4:client:openMenu",
+                    icon = "fas fa-bus",
+                    label = "Bus Job Menu",
+                    job = allowedJob,
+                },
+            },
+            distance = 5.0
+        })
+    end
+
     while true do
         Wait(0)
         local playerPed = PlayerPedId()
         local playerCoords = GetEntityCoords(playerPed)
         local distance = #(playerCoords - busSpawnLocation)
+        local vehicle = GetVehiclePedIsIn(playerPed, false)
+        local isBus = (vehicle ~= 0 and GetEntityModel(vehicle) == GetHashKey(busModel))
 
         if distance < 10.0 then
             DrawMarker(
@@ -450,12 +526,17 @@ CreateThread(function()
                 false, true, 2, nil, nil, false -- bob up and down, face camera, draw on ground
             )      
             if distance < 1.5 then
-                QBCore.Functions.DrawText3D(busSpawnLocation.x, busSpawnLocation.y, busSpawnLocation.z, '[E] Select Bus Line | [G] Delete Bus')
+                if isBus then
+                     QBCore.Functions.DrawText3D(busSpawnLocation.x, busSpawnLocation.y, busSpawnLocation.z, '[G] Delete Bus')
+                     if IsControlJustReleased(0, 47) then
+                        deleteBus()
+                     end
+                elseif not Config.UseTarget then
+                    QBCore.Functions.DrawText3D(busSpawnLocation.x, busSpawnLocation.y, busSpawnLocation.z, '[E] Select Bus Line')
 
-                if IsControlJustReleased(0, 38) then
-                    showBusLinesMenu()
-                elseif IsControlJustReleased(0, 47) then
-                    deleteBus()
+                    if IsControlJustReleased(0, 38) then
+                        showBusLinesMenu()
+                    end
                 end
             end
         end
@@ -493,6 +574,36 @@ RegisterNetEvent('QBCore:Client:OnJobUpdate', function(job)
         showDashboard = false
         activeBusLine = nil
         SendNUIMessage({ type = 'bus_dashboard_visible', visible = false })
+    end
+end)
+
+CreateThread(function()
+    if Config.ClothingNPC then
+        local model = GetHashKey(Config.ClothingNPC.model)
+        RequestModel(model)
+        while not HasModelLoaded(model) do Wait(0) end
+        
+        local coords = Config.ClothingNPC.coords
+        -- Removed -1.0 from Z coordinate to fix spawning underground
+        clothingNPC = CreatePed(4, model, coords.x, coords.y, coords.z, coords.w, false, true)
+        SetEntityHeading(clothingNPC, coords.w)
+        FreezeEntityPosition(clothingNPC, true)
+        SetEntityInvincible(clothingNPC, true)
+        SetBlockingOfNonTemporaryEvents(clothingNPC, true)
+        SetModelAsNoLongerNeeded(model)
+        
+        exports['qb-target']:AddTargetEntity(clothingNPC, {
+            options = {
+                {
+                    type = "client",
+                    event = "bus_m4:client:toggleDuty",
+                    icon = "fas fa-tshirt",
+                    label = "Toggle Bus Uniform",
+                    job = Config.AllowedJob,
+                },
+            },
+            distance = 2.5,
+        })
     end
 end)
 
