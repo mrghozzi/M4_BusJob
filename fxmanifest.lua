@@ -14,8 +14,11 @@ files {
     'ui/script.js'
 }
 
+shared_scripts {
+    'config.lua'
+}
+
 client_scripts {
-    'config.lua',
     'client.lua'
 }
 

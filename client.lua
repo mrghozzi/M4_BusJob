@@ -16,6 +16,10 @@ local currentStationIndex = 0
 local nextStationIndex = 0
 local showDashboard = false
 local currentBusEntity = nil
+local routeSessionId = 0
+local routeInProgress = false
+local clothingNPC = nil
+local isWearingUniform = false
 
 -- Passenger state
 local passengers = {}
@@ -35,17 +39,29 @@ local activeBlips = {}
 
 local function setUniform()
     if not Config.Uniforms then return end
-    local playerPed = PlayerPedId()
-    local gender = QBCore.Functions.GetPlayerData().charinfo.gender
+    local playerData = QBCore.Functions.GetPlayerData()
+    if not playerData or not playerData.charinfo then return end
+
+    local gender = playerData.charinfo.gender
     local uniform = (gender == 1) and Config.Uniforms.female or Config.Uniforms.male
     
     if uniform then
         TriggerEvent('qb-clothing:client:loadOutfit', uniform)
+        isWearingUniform = true
     end
 end
 
 local function resetUniform()
     TriggerServerEvent("qb-clothes:loadPlayerSkin")
+    isWearingUniform = false
+end
+
+local function stopActiveRoute()
+    if routeInProgress then
+        routeInProgress = false
+        routeSessionId = routeSessionId + 1
+        TriggerServerEvent('bus_m4:server:endRoute')
+    end
 end
 
 local function showBusLinesMenu()
@@ -74,6 +90,16 @@ local function showBusLinesMenu()
         })
     end
     TriggerEvent('qb-menu:client:openMenu', menu)
+end
+
+local function getBusLineByNumber(lineNumber)
+    if type(lineNumber) ~= 'number' then return nil end
+    for _, line in ipairs(busLines) do
+        if line.number == math.floor(lineNumber) then
+            return line
+        end
+    end
+    return nil
 end
 
 local function createBlipsForLine(line)
@@ -210,7 +236,7 @@ local function removePassengersAtStation(stationIndex, busVehicle)
     
     -- If passengers were removed and earned money, show notification
     if passengersRemoved > 0 then
-        TriggerServerEvent('bus_m4:server:addMoney', stationEarnings)
+        TriggerServerEvent('bus_m4:server:addMoney', passengersRemoved, stationIndex)
         QBCore.Functions.Notify('You earned $' .. stationEarnings .. ' from ' .. passengersRemoved .. ' passengers!', 'success')
     end
     
@@ -315,6 +341,13 @@ RegisterNetEvent('spawnBusWithLine', function(line)
         return
     end
 
+    local selectedLine = getBusLineByNumber(line and line.number)
+    if not selectedLine or not selectedLine.stations or #selectedLine.stations == 0 then
+        QBCore.Functions.Notify('Invalid bus line selected.', 'error')
+        return
+    end
+    line = selectedLine
+
     local playerPed = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(playerPed, false)
 
@@ -326,12 +359,16 @@ RegisterNetEvent('spawnBusWithLine', function(line)
     RequestModel(busModel)
     while not HasModelLoaded(busModel) do Wait(0) end
 
+    stopActiveRoute()
+
     local bus = CreateVehicle(GetHashKey(busModel), busSpawnLocation.x, busSpawnLocation.y, busSpawnLocation.z, 263.27, true, false)
     currentBusEntity = bus
     SetVehicleCustomPrimaryColour(bus, line.color.r, line.color.g, line.color.b)
     TaskWarpPedIntoVehicle(playerPed, bus, -1)
     TriggerEvent("vehiclekeys:client:SetOwner", GetVehicleNumberPlateText(bus)) -- Set the vehicle keys
-    exports['LegacyFuel']:SetFuel(bus, 100.0) -- Set fuel to 100%
+    if GetResourceState('LegacyFuel') == 'started' then
+        exports['LegacyFuel']:SetFuel(bus, 100.0)
+    end
     SetModelAsNoLongerNeeded(busModel)
 
     QBCore.Functions.Notify('Bus for ' .. line.name .. ' has been spawned!', 'warning')
@@ -344,35 +381,54 @@ RegisterNetEvent('spawnBusWithLine', function(line)
     currentStationIndex = 0
     nextStationIndex = 1
     showDashboard = true
+    routeInProgress = true
+    routeSessionId = routeSessionId + 1
+    local thisRouteSession = routeSessionId
+    TriggerServerEvent('bus_m4:server:startRoute', line.number)
 
     CreateThread(function()
-        while true do
+        while routeInProgress and thisRouteSession == routeSessionId do
+            if not currentBusEntity or not DoesEntityExist(currentBusEntity) then
+                stopActiveRoute()
+                break
+            end
+
             for i, station in ipairs(line.stations) do
+                if not routeInProgress or thisRouteSession ~= routeSessionId then break end
+
                 -- Update dashboard variables
                 nextStationIndex = i
                 
                 SetNewWaypoint(station.x, station.y)
                 QBCore.Functions.Notify('GPS route set to station ' .. i .. ' of ' .. line.name, 'success')
                 local reached = false
-                while not reached do
+                while routeInProgress and thisRouteSession == routeSessionId and not reached do
                     Wait(1000)
+                    if not currentBusEntity or not DoesEntityExist(currentBusEntity) then
+                        stopActiveRoute()
+                        break
+                    end
                     local playerCoords = GetEntityCoords(PlayerPedId())
-                    if #(playerCoords - station) < 10.0 then
+                    local vehicle = GetVehiclePedIsIn(PlayerPedId(), false)
+                    if vehicle ~= 0 and vehicle == currentBusEntity and #(playerCoords - station) < 10.0 then
                         reached = true
                     end
                 end
+                if not routeInProgress or thisRouteSession ~= routeSessionId then break end
                 
                 -- Update dashboard variables after reaching station
                 currentStationIndex = i
                 nextStationIndex = i < #line.stations and i + 1 or 1
+                TriggerServerEvent('bus_m4:server:stationReached', line.number, i)
                 
                 QBCore.Functions.Notify('You have reached station ' .. i .. ' of ' .. line.name, 'success')
                 QBCore.Functions.Notify('Press K to open the bus doors.', 'primary')
                 local doorsOpened = false
-                while not doorsOpened do
-                    Wait(0)
+                local waitStart = GetGameTimer()
+                while routeInProgress and thisRouteSession == routeSessionId and not doorsOpened do
+                    Wait(100)
                     local vehicle = GetVehiclePedIsIn(PlayerPedId(), false)
-                    if vehicle ~= 0 and GetEntityModel(vehicle) == GetHashKey(busModel) then
+                    if vehicle ~= 0 and vehicle == currentBusEntity and GetEntityModel(vehicle) == GetHashKey(busModel) then
                         if GetVehicleDoorLockStatus(vehicle) == 1 then
                             doorsOpened = true
                             
@@ -390,15 +446,26 @@ RegisterNetEvent('spawnBusWithLine', function(line)
                             end
                         end
                     end
+                    if not doorsOpened and GetGameTimer() - waitStart > 60000 then
+                        doorsOpened = true
+                        QBCore.Functions.Notify('Stop timeout reached, continuing route.', 'error')
+                    end
                 end
+                if not routeInProgress or thisRouteSession ~= routeSessionId then break end
+
                 QBCore.Functions.Notify('Wait 5 seconds before moving.', 'primary')
-                Wait(5000)
+                local pauseStart = GetGameTimer()
+                while routeInProgress and thisRouteSession == routeSessionId and GetGameTimer() - pauseStart < 5000 do
+                    Wait(100)
+                end
             end
+            if not routeInProgress or thisRouteSession ~= routeSessionId then break end
+
             QBCore.Functions.Notify('All stations for ' .. line.name .. ' completed! Restarting.', 'warning')
             
             -- Route Completion Bonus
             if Config.RouteCompletionBonus then
-                 TriggerServerEvent('bus_m4:server:finishRoute', Config.RouteCompletionBonus, line.name)
+                 TriggerServerEvent('bus_m4:server:finishRoute', line.number)
                  QBCore.Functions.Notify('You received a $' .. Config.RouteCompletionBonus .. ' bonus for completing the route!', 'success')
             end
             
@@ -414,6 +481,8 @@ local function deleteBus()
     local vehicle = GetVehiclePedIsIn(playerPed, false)
 
     if vehicle ~= 0 and GetEntityModel(vehicle) == GetHashKey(busModel) then
+        stopActiveRoute()
+
         -- Clean up all passengers before deleting the bus
         cleanupAllPassengers()
         
@@ -441,6 +510,7 @@ local function deleteBus()
         
         -- Reset earnings
         totalEarnings = 0
+        isWearingUniform = false
     else
         QBCore.Functions.Notify('You are not in the bus!', 'error')
     end
@@ -571,9 +641,27 @@ end)
 -- Hide dashboard when player job changes away from allowed job
 RegisterNetEvent('QBCore:Client:OnJobUpdate', function(job)
     if job and job.name ~= allowedJob then
+        stopActiveRoute()
+        cleanupAllPassengers()
         showDashboard = false
         activeBusLine = nil
+        currentBusEntity = nil
         SendNUIMessage({ type = 'bus_dashboard_visible', visible = false })
+    end
+end)
+
+RegisterNetEvent('bus_m4:client:toggleDuty', function()
+    if not isPlayerBusDriver() then
+        QBCore.Functions.Notify('You are not a bus driver!', 'error')
+        return
+    end
+
+    if isWearingUniform then
+        resetUniform()
+        QBCore.Functions.Notify('Bus uniform removed.', 'success')
+    else
+        setUniform()
+        QBCore.Functions.Notify('Bus uniform equipped.', 'success')
     end
 end)
 
@@ -610,6 +698,8 @@ end)
 -- Hide dashboard cleanly when resource stops to avoid stuck UI
 AddEventHandler('onResourceStop', function(res)
     if res == GetCurrentResourceName() then
+        stopActiveRoute()
+        cleanupAllPassengers()
         SendNUIMessage({ type = 'bus_dashboard_visible', visible = false })
     end
 end)
